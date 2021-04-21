@@ -6,6 +6,7 @@ import { RuntimeOptions } from '@remax/framework-shared';
 
 interface SpliceUpdate {
   path: string[];
+  parentPath?: string[];
   start: number;
   id: number;
   deleteCount: number;
@@ -17,6 +18,7 @@ interface SpliceUpdate {
 
 interface SetUpdate {
   path: string[];
+  parentPath?: string[],
   name: string;
   value: any;
   type: 'set';
@@ -115,16 +117,32 @@ export default class Container {
         return acc;
       }
       if (update.type === 'splice') {
-        acc[this.normalizeUpdatePath([...update.path, 'nodes', update.id.toString()])] = update.items[0] || null;
-
         if (update.children) {
-          acc[this.normalizeUpdatePath([...update.path, 'children'])] = (update.children || []).map(c => c.id);
+          acc.push({
+            value: (update.children || []).map(c => c.id),
+            attribute: 'children',
+            parentPath: update.parentPath,
+            path: [...update.path, 'children']
+          })
         }
+        acc.push({
+          value: update.items[0] || null,
+          attribute: 'nodes',
+          id: update.id.toString(),
+          path: [...update.path, 'nodes', update.id.toString()],
+          parentPath: update.parentPath
+        })
       } else {
-        acc[this.normalizeUpdatePath([...update.path, update.name])] = update.value;
+        acc.push({
+          value: update.value,
+          attribute: 'props',
+          updateName: update.name,
+          parentPath: update.parentPath,
+          path: [...update.path, update.name]
+        })
       }
       return acc;
-    }, {});
+    }, []);
 
     this.context.setData(updatePayload, () => {
       nativeEffector.run();

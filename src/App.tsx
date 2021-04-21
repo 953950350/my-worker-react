@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import TestComponent from './TestComponent'
 import logo from './logo.svg'
 import './App.css'
 
@@ -6,21 +7,23 @@ function App() {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
-    setTimeout(() => {
-      setCount(count + 1)
-    }, 5000)
-  }, [count])
+    setInterval(() => {
+      setCount(c => c + 1)
+    }, 500)
+  }, [])
 
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        {count < 5 && <img src={logo} className="App-logo" alt="logo" />}
+        {count >= 10 && <img src={logo} className="App-logo" alt="logo" />}
         <p>Hello Vite + React!</p>
-        <p>
+        <TestComponent count={count} />
+        {<p>
           <button onClick={() => setCount((count) => count + 1)}>
             count is: {count}
           </button>
-        </p>
+        </p>}
         <p>
           Edit <code>App.tsx</code> and save to test HMR updates.
         </p>
@@ -36,11 +39,12 @@ function App() {
           {' | '}
           <a
             className="App-link"
+            data-test={count}
             href="https://vitejs.dev/guide/features.html"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Vite Docs
+            Vite Docs{count}
           </a>
         </p>
       </header>

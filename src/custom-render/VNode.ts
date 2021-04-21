@@ -78,6 +78,7 @@ export default class VNode {
       this.container.requestUpdate({
         type: 'splice',
         path: this.path,
+        parentPath: this.path,
         start: node.index,
         id: node.id,
         deleteCount: 0,
@@ -122,6 +123,7 @@ export default class VNode {
       this.container.requestUpdate({
         type: 'splice',
         path: this.path,
+        parentPath: this.path,
         start: index,
         id: node.id,
         deleteCount: 1,
@@ -155,6 +157,7 @@ export default class VNode {
       this.container.requestUpdate({
         type: 'splice',
         path: this.path,
+        parentPath: this.path,
         start: node.index,
         id: node.id,
         deleteCount: 0,
@@ -171,6 +174,7 @@ export default class VNode {
         type: 'splice',
         // root 不会更新，所以肯定有 parent
         path: this.parent!.path,
+        parentPath: this.parent!.path,
         start: this.index,
         id: this.id,
         deleteCount: 1,
@@ -186,13 +190,10 @@ export default class VNode {
 
       let path = [...this.parent!.path, 'nodes', this.id.toString(), 'props'];
 
-      if (RuntimeOptions.get('platform') === 'ali') {
-        path = [...this.parent!.path, `children[${this.index}].props`];
-      }
-
       this.container.requestUpdate({
         type: 'set',
         path,
+        parentPath: [...this.parent!.path, 'nodes', this.id.toString()],
         name: propName,
         value: propValue,
         node: this,
