@@ -11,7 +11,7 @@ let domRender: DomRender
 const p = {
   setData(state: any, callback: () => void) {
     if (!domRender) {
-      domRender = new DomRender(state)
+      domRender = new DomRender(state, container)
     } else {
       domRender.update(state)
     }
@@ -24,6 +24,7 @@ const p = {
 };
 
 const container = new Container(p)
+
 // ReactDOM.render(<App />, document.getElementById('root'))
 
 render(<App />, container)

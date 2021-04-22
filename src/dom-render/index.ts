@@ -22,29 +22,12 @@ const transformPropName: (name: string) => string = transformName(
   }
 );
 
-
-
-function createDom(vDom: any): HTMLElement | Text {
-  if (vDom.type === "plain-text") {
-    return document.createTextNode(vDom.text)
-  }
-  const dom: HTMLElement = document.createElement(transformTagName(vDom.type));
-  vDom.el = dom
-  Object.keys(vDom.props).forEach((prop) =>
-    dom.setAttribute(transformPropName(prop), vDom.props[prop])
-  );
-  vDom.children.forEach((id: number) => {
-    const children = vDom.nodes[id];
-    let childrenDom = createDom(children);
-    dom.appendChild(childrenDom);
-  });
-  return dom;
-}
-
 export default class DomRender {
   vDom: any;
+  container: any
+  eventCallbackMap: { [key: string]: any } = {}
 
-  constructor(patchs: { [key: string]: any }[]) {
+  constructor(patchs: { [key: string]: any }[], container: any) {
     this.vDom = {
       children: [],
       id: -1,
@@ -57,6 +40,44 @@ export default class DomRender {
       el: document.querySelector('#root')
     };
     this.update(patchs)
+    this.container = container
+  }
+
+  createDom(vDom: any): HTMLElement | Text {
+    if (vDom.type === "plain-text") {
+      return document.createTextNode(vDom.text)
+    }
+    const dom: HTMLElement = document.createElement(transformTagName(vDom.type));
+    vDom.el = dom
+    Object.keys(vDom.props).forEach((prop) =>
+      this.setAttribute(dom, prop, vDom.props[prop])
+    );
+    vDom.children.forEach((id: number) => {
+      const children = vDom.nodes[id];
+      let childrenDom = this.createDom(children);
+      dom.appendChild(childrenDom);
+    });
+    return dom;
+  }
+
+  setAttribute(el: HTMLElement, key: string, value: string, oldValue?: string) {
+    key = transformPropName(key)
+    if (key[0] === 'o' && key[1] === 'n') {
+      key = key.slice(2).toLowerCase()
+      if (oldValue && typeof this.eventCallbackMap[oldValue] === 'function') {
+        el.removeEventListener(key, this.eventCallbackMap[oldValue])
+      }
+      this.eventCallbackMap[value] = (e: Event) => {
+        this.fireEvent(value, e)
+      }
+      el.addEventListener(key, this.eventCallbackMap[value])
+    } else {
+      el.setAttribute(transformPropName(key), value)
+    }
+  }
+
+  fireEvent(name: string, event: Event) {
+    this.container.context[name](event)
   }
 
   updateChildren(patch: { [key: string]: any }) {
@@ -89,7 +110,7 @@ export default class DomRender {
     }
     // 在nodes存在以该id为key的值就是更新
     const isUpdate = Object.keys(parent.nodes).indexOf(patch.id) !== -1
-    const newNode = createDom(patch.value)
+    const newNode = this.createDom(patch.value)
     parent.nodes[patch.id] = patch.value
     if (isUpdate) {
       const oldNode = childNodesList[index]
@@ -113,8 +134,12 @@ export default class DomRender {
   }
   updateProps(patch: { [key: string]: any }) {
     const parent = this.getVDomForPath(patch.parentPath)
-    parent.props[patch.updateName] = patch.value
-    parent.el.setAttribute(transformPropName(patch.updateName), patch.value)
+    if (patch.value === null || patch.value === false) {
+      delete parent.props[patch.updateName]
+      parent.el.removeAttribute(transformPropName(patch.updateName))
+    } else {
+      this.setAttribute(parent.el, patch.updateName, patch.value, parent.props[patch.updateName])
+    }
   }
   update(patchs: { [key: string]: any }[]) {
     patchs.forEach(patch => {

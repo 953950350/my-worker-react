@@ -6,11 +6,15 @@ import './App.css'
 function App() {
   const [count, setCount] = useState(0)
 
-  useEffect(() => {
-    setInterval(() => {
-      setCount(c => c + 1)
-    }, 500)
-  }, [])
+  // useEffect(() => {
+  //   setInterval(() => {
+  //     setCount(c => c + 1)
+  //   }, 500)
+  // }, [])
+
+  function onValueChange (e: any) {
+    // console.log(e, '---------onValueChange--------')
+  }
 
   return (
     <div className="App">
@@ -18,7 +22,7 @@ function App() {
         {count < 5 && <img src={logo} className="App-logo" alt="logo" />}
         {count >= 10 && <img src={logo} className="App-logo" alt="logo" />}
         <p>Hello Vite + React!</p>
-        <TestComponent count={count} />
+        <TestComponent count={count} onValueChange={onValueChange} />
         {<p>
           <button onClick={() => setCount((count) => count + 1)}>
             count is: {count}
